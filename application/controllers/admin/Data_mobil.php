@@ -44,16 +44,35 @@ class Data_mobil extends CI_Controller
                   $central_lock = $this->input->post('central_lock');
                   $status = $this->input->post('status');
                   $gambar = $_FILES['gambar']['name'];
-                  if ($gambar = '') {
+                  if ($gambar == '') {
+                        $gambar = '';
                   } else {
                         $config['upload_path'] = './assets/upload';
-                        $config['allowed_types'] = 'jpg|jpeg|png|tiff';
-
+                        $config['allowed_types'] = 'jpg|jpeg|png|tiff|webp';
+                        $config['encrypt_name'] = TRUE; // nama file akan diacak saat diupload
+                        $config['max_size'] = '10240'; // maksimum ukuran file dalam kilobita
+                        $config['file_ext_tolower'] = TRUE; // konversi ekstensi file menjadi huruf kecil
                         $this->load->library('upload', $config);
                         if (!$this->upload->do_upload('gambar')) {
                               echo 'Gambar Mobil Gagal di Upload';
                         } else {
-                              $gambar = $this->upload->data('file_name');
+                              $file_name = $this->upload->data('file_name');
+
+                              $file_ext = $this->upload->data('file_ext');
+                              $image_path = './assets/upload/' . $file_name;
+                              if ($file_ext == '.jpg' || $file_ext == '.jpeg') {
+                                    $image = imagecreatefromjpeg($image_path);
+                              } else if ($file_ext == '.png') {
+                                    $image = imagecreatefrompng($image_path);
+                              } else if ($file_ext == '.tiff') {
+                                    $image = imagecreatefromtiff($image_path);
+                              }
+                              $pecah = explode(".", $file_name);
+                              $nama_file_tanpa_ext = $pecah[0];
+                              imagewebp($image, './assets/upload/' . $nama_file_tanpa_ext . '.webp');
+
+                              unlink($image_path);
+                              $gambar = $nama_file_tanpa_ext . '.webp';
                         }
                   }
                   $data = [
